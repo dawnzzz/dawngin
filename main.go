@@ -2,21 +2,25 @@ package main
 
 import (
 	"DawnGin/dain"
-	"fmt"
 	"net/http"
 )
 
 func main() {
 	e := dain.New()
 
-	e.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello World, URL path = %v", r.URL.Path)
+	e.Get("/", func(c *dain.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Dawn</h1>")
 	})
 
-	e.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		for k, v := range r.Header {
-			fmt.Fprintf(w, "Header[%q] = %q\n", k, v)
-		}
+	e.Get("/hello", func(c *dain.Context) {
+		c.String(http.StatusOK, "Hello World, URL path = %v", c.Path)
+	})
+
+	e.Post("/login", func(c *dain.Context) {
+		c.JSON(http.StatusOK, dain.H{
+			"username": c.PostForm("username"),
+			"password": c.PostForm("password"),
+		})
 	})
 
 	e.Run(":9000")
