@@ -13,8 +13,9 @@ type Context struct {
 	Writer http.ResponseWriter
 	Req    *http.Request
 	// 请求信息
-	Path   string // 请求路径
-	Method string // 请求方法
+	Path   string            // 请求路径
+	Method string            // 请求方法
+	Params map[string]string // 路由参数，如 /hello/:user 匹配 /hello/dawn，则 Params["user"]=dawn
 	// 响应信息
 	StatusCode int // 响应码
 }
@@ -26,6 +27,12 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		Path:   r.URL.Path,
 		Method: r.Method,
 	}
+}
+
+// Param 获取路由参数
+func (c *Context) Param(key string) string {
+	value, _ := c.Params[key]
+	return value
 }
 
 // PostForm 根据 key 获取第一个表单数据
