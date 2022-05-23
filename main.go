@@ -36,5 +36,14 @@ func main() {
 		})
 	})
 
+	// 分组路由
+	v1 := e.Group("/v1")
+	{
+		v1.Get("/video/:name", func(c *dain.Context) {
+			videoName := c.Param("name")
+			c.String(http.StatusOK, "Hello, this is v1 group, video name = %v, path = %v", videoName, c.Path)
+		})
+	}
+
 	e.Run(":9000")
 }
