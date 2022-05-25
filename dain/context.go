@@ -21,6 +21,8 @@ type Context struct {
 	// 中间件
 	handlers []HandlerFunc // 存储中间件
 	index    int           // 执行的中间件下标
+	// 指向 *Engine
+	engine *Engine
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -86,15 +88,21 @@ func (c *Context) JSON(code int, obj interface{}) error {
 	return nil
 }
 
+func (c *Context) Fail(code int, err string) {
+	c.index = len(c.handlers)
+	c.JSON(code, H{"msg": err})
+}
+
 func (c *Context) Data(code int, data []byte) error {
 	c.Status(code)
 	_, err := c.Writer.Write(data)
 	return err
 }
 
-func (c *Context) HTML(code int, html string) error {
+func (c *Context) HTML(code int, name string, data interface{}) {
 	c.SetHeader("Content-Type", "text/html")
 	c.Status(code)
-	_, err := c.Writer.Write([]byte(html))
-	return err
+	if err := c.engine.htmlTemplates.ExecuteTemplate(c.Writer, name, data); err != nil {
+		c.Fail(http.StatusInternalServerError, err.Error())
+	}
 }

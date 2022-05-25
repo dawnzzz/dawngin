@@ -11,8 +11,14 @@ func main() {
 	// 使用 Logger 中间件
 	e.Use(dain.Logger())
 
-	e.Get("/", func(c *dain.Context) {
-		c.HTML(http.StatusOK, "<h1>Hello Dawn</h1>")
+	// 加载静态文件
+	e.Static("/static", "./static")
+
+	// 加载模板
+	e.LoadHTMLGlob("templates/*")
+
+	e.Get("/index", func(c *dain.Context) {
+		c.HTML(http.StatusOK, "index.tmpl", c.Path)
 	})
 
 	e.Get("/hello", func(c *dain.Context) {

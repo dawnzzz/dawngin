@@ -1,7 +1,9 @@
 package dain
 
 import (
+	"html/template"
 	"net/http"
+	"path"
 	"strings"
 )
 
@@ -15,6 +17,9 @@ type Engine struct {
 	*RouterGroup
 	// 记录所有的路由分组
 	groups []*RouterGroup
+	// 模板
+	htmlTemplates *template.Template
+	funcMap       template.FuncMap
 }
 
 // RouterGroup 分组路由
@@ -75,10 +80,41 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.handlers = append(c.handlers, group.middleware...)
 		}
 	}
+	c.engine = e
 	e.router.handle(c)
 }
 
 // Run 运行服务器
 func (e *Engine) Run(addr string) error {
 	return http.ListenAndServe(addr, e)
+}
+
+func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandlerFunc {
+	absolutePath := path.Join(group.prefix, relativePath)
+	fileServer := http.StripPrefix(absolutePath, http.FileServer(fs))
+	return func(c *Context) {
+		file := c.Param("filepath")
+		// 检查文件是否可以访问
+		if _, err := fs.Open(file); err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		fileServer.ServeHTTP(c.Writer, c.Req)
+	}
+}
+
+// Static 将磁盘上的某个路径 root 映射到 relativePath 上
+func (group *RouterGroup) Static(relativePath string, root string) {
+	handler := group.createStaticHandler(relativePath, http.Dir(root))
+	urlPattern := path.Join(relativePath, "/*filepath")
+	// 注册
+	group.Get(urlPattern, handler)
+}
+
+func (e *Engine) SetFuncMap(funcMap template.FuncMap) {
+	e.funcMap = funcMap
+}
+
+func (e *Engine) LoadHTMLGlob(pattern string) {
+	e.htmlTemplates = template.Must(template.New("").Funcs(e.funcMap).ParseGlob(pattern))
 }
