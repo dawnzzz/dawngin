@@ -8,6 +8,9 @@ import (
 func main() {
 	e := dain.New()
 
+	// 使用 Logger 中间件
+	e.Use(dain.Logger())
+
 	e.Get("/", func(c *dain.Context) {
 		c.HTML(http.StatusOK, "<h1>Hello Dawn</h1>")
 	})

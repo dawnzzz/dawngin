@@ -1,8 +1,8 @@
 package dain
 
 import (
-	"fmt"
 	"log"
+	"net/http"
 	"strings"
 )
 
@@ -92,8 +92,12 @@ func (r *router) handle(c *Context) {
 		// 匹配路由
 		key := c.Method + "-" + n.pattern
 		c.Params = params
-		r.handlers[key](c)
+		c.handlers = append(c.handlers, r.handlers[key])
 	} else {
-		fmt.Fprintf(c.Writer, "404 NOT FOUND FOR PATH: %v", c.Path)
+		c.handlers = append(c.handlers, func(c *Context) {
+			c.String(http.StatusNotFound, "404 NOT FOUND FOR PATH: %v", c.Path)
+		})
 	}
+
+	c.Next()
 }

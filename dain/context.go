@@ -18,6 +18,9 @@ type Context struct {
 	Params map[string]string // 路由参数，如 /hello/:user 匹配 /hello/dawn，则 Params["user"]=dawn
 	// 响应信息
 	StatusCode int // 响应码
+	// 中间件
+	handlers []HandlerFunc // 存储中间件
+	index    int           // 执行的中间件下标
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -26,6 +29,15 @@ func NewContext(w http.ResponseWriter, r *http.Request) *Context {
 		Req:    r,
 		Path:   r.URL.Path,
 		Method: r.Method,
+		index:  -1,
+	}
+}
+
+// Next 执行下一个中间件
+func (c *Context) Next() {
+	c.index++
+	for ; c.index < len(c.handlers); c.index++ {
+		c.handlers[c.index](c)
 	}
 }
 

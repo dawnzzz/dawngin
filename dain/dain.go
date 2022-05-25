@@ -2,6 +2,7 @@ package dain
 
 import (
 	"net/http"
+	"strings"
 )
 
 // HandlerFunc handler 函数类型
@@ -33,6 +34,7 @@ func New() *Engine {
 	return engine
 }
 
+// Group 分组
 func (group *RouterGroup) Group(prefix string) *RouterGroup {
 	engine := group.engine
 	newGroup := &RouterGroup{
@@ -42,6 +44,11 @@ func (group *RouterGroup) Group(prefix string) *RouterGroup {
 	}
 	engine.groups = append(engine.groups, newGroup) // 在 Engine 中保存新的分组
 	return newGroup
+}
+
+// Use 为分组添加中间件
+func (group *RouterGroup) Use(middlewares ...HandlerFunc) {
+	group.middleware = append(group.middleware, middlewares...)
 }
 
 // addRouter 实现路由注册功能
@@ -63,6 +70,11 @@ func (group *RouterGroup) Post(pattern string, handler HandlerFunc) {
 // 实现 http.Handler 接口，自定义路由器
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := NewContext(w, r)
+	for _, group := range e.groups {
+		if strings.HasPrefix(r.URL.Path, group.prefix) {
+			c.handlers = append(c.handlers, group.middleware...)
+		}
+	}
 	e.router.handle(c)
 }
 
