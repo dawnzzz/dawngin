@@ -43,6 +43,11 @@ func (c *Context) Next() {
 	}
 }
 
+// Abort 中止中间件的执行
+func (c *Context) Abort() {
+	c.index = len(c.handlers)
+}
+
 // Param 获取路由参数
 func (c *Context) Param(key string) string {
 	value, _ := c.Params[key]

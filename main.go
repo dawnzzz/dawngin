@@ -6,10 +6,8 @@ import (
 )
 
 func main() {
-	e := dain.New()
-
-	// 使用 Logger 中间件
-	e.Use(dain.Logger())
+	// 默认使用 Logger 和 Recovery 中间件
+	e := dain.Default()
 
 	// 加载静态文件
 	e.Static("/static", "./static")
@@ -19,6 +17,14 @@ func main() {
 
 	e.Get("/index", func(c *dain.Context) {
 		c.HTML(http.StatusOK, "index.tmpl", c.Path)
+	})
+
+	// 测试 Recovery 中间件
+	e.Get("/panic", func(c *dain.Context) {
+		array := []int{1, 2, 3}
+		c.JSON(http.StatusOK, dain.H{
+			"msg": array[100],
+		})
 	})
 
 	e.Get("/hello", func(c *dain.Context) {
